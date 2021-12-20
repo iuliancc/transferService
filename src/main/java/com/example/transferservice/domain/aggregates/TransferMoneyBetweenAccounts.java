@@ -3,6 +3,7 @@ package com.example.transferservice.domain.aggregates;
 
 import com.example.transferservice.domain.entities.Account;
 import com.example.transferservice.infrasctructure.ApplicationException;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -10,17 +11,14 @@ import java.math.BigDecimal;
 @Slf4j
 public class TransferMoneyBetweenAccounts {
 
-    private final Account sourceAccount;
-    private final Account receivingAccount;
+    private  Account sourceAccount;
+    private  Account receivingAccount;
 
 
-    public TransferMoneyBetweenAccounts(Account sourceAccount, Account receivingAccount, BigDecimal transactionAmount) {
+   public void transferMoneyBetweenAccounts(@NonNull Account sourceAccount,@NonNull Account receivingAccount,@NonNull BigDecimal transactionAmount) throws ApplicationException {
+
         this.sourceAccount = sourceAccount;
         this.receivingAccount = receivingAccount;
-        transferMoneyBetweenAccounts(transactionAmount);
-    }
-
-    private void transferMoneyBetweenAccounts(BigDecimal transactionAmount) throws ApplicationException {
 
         var sourceAccountBalance = sourceAccount.getBalance();
         var recevingAccountBalance = receivingAccount.getBalance();

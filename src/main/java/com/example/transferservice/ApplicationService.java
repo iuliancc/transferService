@@ -21,28 +21,33 @@ public class ApplicationService {
         this.accountRepository = accountRepository;
     }
 
-    public void transferMoney(TransactionDTO transactionDTO) throws ApplicationException {
+    public TransferMoneyBetweenAccounts transferMoney(TransactionDTO transactionDTO) throws ApplicationException {
 
         log.debug("transactionDTO : " + transactionDTO.toString());
 
-            var ownerAccount = accountRepository.findById(transactionDTO.getSourceAccountId());
-            var recevingAccount = accountRepository.findById(transactionDTO.getAccountsIDToBeCredit());
+        var ownerAccount = accountRepository.findById(transactionDTO.getSourceAccountId());
+        var recevingAccount = accountRepository.findById(transactionDTO.getAccountsIDToBeCredit());
 
-            if (ownerAccount.isEmpty()) {
-                throw new ApplicationException("The source account doesn't exist");
-            }
-
-            if (transactionDTO.getSourceAccountId().equals(transactionDTO.getAccountsIDToBeCredit()))
-                throw new ApplicationException("You cannot transfer money in the same account");
-
-            if (recevingAccount.isEmpty()) {
-                throw new ApplicationException("The receiving account doesn't exist");
-            }
-
-
-            new TransferMoneyBetweenAccounts(ownerAccount.get(),recevingAccount.get(), new BigDecimal(transactionDTO.getTransactionAmount()));
-
+        if (ownerAccount.isEmpty()) {
+            throw new ApplicationException("The source account doesn't exist");
         }
+
+        if (transactionDTO.getSourceAccountId().equals(transactionDTO.getAccountsIDToBeCredit()))
+            throw new ApplicationException("You cannot transfer money in the same account");
+
+        if (recevingAccount.isEmpty()) {
+            throw new ApplicationException("The receiving account doesn't exist");
+        }
+
+
+        var transferMoney = new TransferMoneyBetweenAccounts();
+        transferMoney.transferMoneyBetweenAccounts(ownerAccount.get(), recevingAccount.get(), new BigDecimal(transactionDTO.getTransactionAmount()));
+
+        accountRepository.save(transferMoney.getSourceAccount());
+        accountRepository.save(transferMoney.getReceivingAccount());
+
+        return transferMoney;
     }
+}
 
 

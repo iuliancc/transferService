@@ -48,13 +48,12 @@ class TransactionSteps {
          when(repository.findById("129654")).thenReturn(Optional.of(new Account("129654", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"))));
          when(repository.findById("4687")).thenReturn(Optional.of(new Account("4687", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"))));
 
-        var ownerAccount = repository.findById("129654");
-        var recevingAccount = repository.findById("4687");
 
-        applicationService.transferMoney(new TransactionDTO("129654", "4687", "10"));
+        var transferMoneyBetweenAccounts =  applicationService.transferMoney(new TransactionDTO("129654", "4687", "10"));
 
-        Assertions.assertEquals(new BigDecimal("0"), ownerAccount.get().getBalance());
-        Assertions.assertEquals(new BigDecimal("20"), recevingAccount.get().getBalance());
+
+        Assertions.assertEquals(new BigDecimal("0"), transferMoneyBetweenAccounts.getSourceAccount().getBalance());
+        Assertions.assertEquals(new BigDecimal("20"), transferMoneyBetweenAccounts.getReceivingAccount().getBalance());
 
     }
 
@@ -86,6 +85,23 @@ class TransactionSteps {
 
         });
         Assertions.assertTrue(exception.getMessage().contains("The source account doesn't exist"));
+    }
+
+    @Test
+    public void notEnoughFunds(){
+
+        //owner account
+        when(repository.findById("129654")).thenReturn(Optional.of(new Account("129654", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"))));
+        //receving account
+        when(repository.findById("4687")).thenReturn(Optional.of(new Account("4687", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"))));
+
+        var exception = Assertions.assertThrows(ApplicationException.class, () -> {
+
+            applicationService.transferMoney(new TransactionDTO("129654", "4687", "40"));
+
+        });
+        Assertions.assertTrue(exception.getMessage().contains("not enough funds"));
+
     }
 
 }
