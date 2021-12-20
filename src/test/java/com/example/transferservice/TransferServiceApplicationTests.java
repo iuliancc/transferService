@@ -16,10 +16,4 @@ class TransferServiceApplicationTests {
 //    @Mock
 //    private RestTemplate restTemplate;
 //
-//    @Mock
-//    private Resposito
-//
-//    @InjectMocks
-//    private ApplicationService applicationService = new ApplicationService()
-
 }
