@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.client.RestTemplate;
 
 
 import java.math.BigDecimal;
@@ -22,27 +21,17 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TransactionSteps {
 
-  @Mock
-  private RestTemplate restTemplate;
+    @Mock
+    private AccountRepository repository;
 
-  @Mock
-  private AccountRepository repository;
-
-  @InjectMocks
-  private   Account ownerAccount = new Account("129654", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"));
-
-  @InjectMocks
-  private Account recevingAccount = new Account("4687", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"));
-
-  @InjectMocks
-  ApplicationService applicationService;
-
-
+    @InjectMocks
+    ApplicationService applicationService;
 
 
     @Test
     public void transferMoneyBetweenSameAccount() {
-        when(repository.findById("129654")).thenReturn(Optional.of(ownerAccount));
+
+        when(repository.findById("129654")).thenReturn(Optional.of(new Account("129654", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"))));
 
         var exception = Assertions.assertThrows(ApplicationException.class, () -> {
 
@@ -56,18 +45,25 @@ class TransactionSteps {
     @Test
     public void transferMoneyBetweenDifferentAccountsWithSuccess() {
 
-        new TransferMoneyBetweenAccounts(ownerAccount, recevingAccount, new BigDecimal("10"));
+         when(repository.findById("129654")).thenReturn(Optional.of(new Account("129654", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"))));
+         when(repository.findById("4687")).thenReturn(Optional.of(new Account("4687", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"))));
 
-        Assertions.assertEquals(new BigDecimal("0"), ownerAccount.getBalance());
-        Assertions.assertEquals(new BigDecimal("20"), recevingAccount.getBalance());
+        var ownerAccount = repository.findById("129654");
+        var recevingAccount = repository.findById("4687");
+
+        applicationService.transferMoney(new TransactionDTO("129654", "4687", "10"));
+
+        Assertions.assertEquals(new BigDecimal("0"), ownerAccount.get().getBalance());
+        Assertions.assertEquals(new BigDecimal("20"), recevingAccount.get().getBalance());
 
     }
 
     @Test
     public void transferMoneyWithNoRecevingAccount() {
-        when(repository.findById("129654")).thenReturn(Optional.ofNullable(ownerAccount));
+        when(repository.findById("129654")).thenReturn(Optional.of(new Account("129654", new BigDecimal("10"), "GBP", LocalDateTime.parse("2017-05-05T10:40:53"))));
         //receiving account doesn't exist in the repository
         when(repository.findById("4444")).thenReturn(Optional.empty());
+        var ownerAccount = repository.findById("129654");
 
         var exception = Assertions.assertThrows(ApplicationException.class, () -> {
 
@@ -75,7 +71,7 @@ class TransactionSteps {
         });
 
         Assertions.assertTrue(exception.getMessage().contains("The receiving account doesn't exist"));
-        Assertions.assertEquals(new BigDecimal("10"), ownerAccount.getBalance());
+        Assertions.assertEquals(new BigDecimal("10"), ownerAccount.get().getBalance());
     }
 
 
@@ -83,8 +79,6 @@ class TransactionSteps {
     public void transferMoneyWithWrongOwnerAccount() {
         //account doesn't exist in the repository
         when(repository.findById("2223")).thenReturn(Optional.empty());
-
-        when(repository.findById("4687")).thenReturn(Optional.ofNullable(recevingAccount));
 
         var exception = Assertions.assertThrows(ApplicationException.class, () -> {
 
